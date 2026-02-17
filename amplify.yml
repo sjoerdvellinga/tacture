@@ -6,7 +6,7 @@ applications:
         preBuild:
           commands:
             - cd ../..
-            - npm ci
+            - npm ci --include=optional
             - cd apps/landing
         build:
           commands:
@@ -28,7 +28,7 @@ applications:
         preBuild:
           commands:
             - cd ../..
-            - npm ci
+            - npm ci --include=optional
             - cd apps/web
         build:
           commands:
