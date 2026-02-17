@@ -1,0 +1,11 @@
+{
+  "name": "tacture",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:landing": "npm --workspace apps/landing run dev",
+    "dev:web": "npm --workspace apps/web run dev"
+  }
+}
