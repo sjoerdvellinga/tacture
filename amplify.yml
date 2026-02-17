@@ -5,33 +5,35 @@ applications:
       phases:
         preBuild:
           commands:
+            - cd ../..
             - npm ci --include=optional
         build:
           commands:
-            - npm run build
+            - npm run -w apps/landing build
       artifacts:
-        baseDirectory: .next
+        baseDirectory: apps/landing/.next
         files:
           - "**/*"
       cache:
         paths:
           - node_modules/**/*
-          - .next/cache/**/*
+          - apps/landing/.next/cache/**/*
 
   - appRoot: apps/web
     frontend:
       phases:
         preBuild:
           commands:
+            - cd ../..
             - npm ci --include=optional
         build:
           commands:
-            - npm run build
+            - npm run -w apps/web build
       artifacts:
-        baseDirectory: .next
+        baseDirectory: apps/web/.next
         files:
           - "**/*"
       cache:
         paths:
           - node_modules/**/*
-          - .next/cache/**/*
+          - apps/web/.next/cache/**/*
