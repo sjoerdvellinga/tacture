@@ -1,17 +1,21 @@
 version: 1
 
 applications:
+  # --- Landing: tacture.com ---
   - appRoot: apps/landing
     frontend:
       phases:
         preBuild:
           commands:
-            - cd ../../
-            - npm ci
+            # ga naar repo root
+            - cd ../..
+            # installeer ALLES incl devDependencies (tailwind zit vaak in devDependencies)
+            - npm ci --include=dev
         build:
           commands:
             - npm run -w apps/landing build
       artifacts:
+        # BELANGRIJK: baseDirectory is RELATIEF t.o.v. appRoot
         baseDirectory: .next
         files:
           - "**/*"
@@ -20,15 +24,15 @@ applications:
           - node_modules/**/*
           - apps/landing/node_modules/**/*
           - apps/web/node_modules/**/*
-          - .next/cache/**/*
 
+  # --- Web app: app.tacture.com ---
   - appRoot: apps/web
     frontend:
       phases:
         preBuild:
           commands:
-            - cd ../../
-            - npm ci
+            - cd ../..
+            - npm ci --include=dev
         build:
           commands:
             - npm run -w apps/web build
@@ -41,4 +45,3 @@ applications:
           - node_modules/**/*
           - apps/web/node_modules/**/*
           - apps/landing/node_modules/**/*
-          - .next/cache/**/*
