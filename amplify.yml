@@ -11,13 +11,34 @@ applications:
         build:
           commands:
             - npm run -w apps/landing build
-
       artifacts:
         baseDirectory: .next
         files:
           - "**/*"
-
       cache:
         paths:
           - node_modules/**/*
           - apps/landing/node_modules/**/*
+          - apps/web/node_modules/**/*
+          - .next/cache/**/*
+
+  - appRoot: apps/web
+    frontend:
+      phases:
+        preBuild:
+          commands:
+            - cd ../../
+            - npm ci
+        build:
+          commands:
+            - npm run -w apps/web build
+      artifacts:
+        baseDirectory: .next
+        files:
+          - "**/*"
+      cache:
+        paths:
+          - node_modules/**/*
+          - apps/web/node_modules/**/*
+          - apps/landing/node_modules/**/*
+          - .next/cache/**/*
