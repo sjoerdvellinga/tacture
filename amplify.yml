@@ -7,13 +7,15 @@ applications:
       phases:
         preBuild:
           commands:
+            - cd ../../
             - npm ci
+
         build:
           commands:
             - npm run -w apps/landing build
 
       artifacts:
-        baseDirectory: .next
+        baseDirectory: apps/landing/.next
         files:
           - '**/*'
 
