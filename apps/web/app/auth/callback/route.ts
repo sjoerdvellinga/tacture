@@ -1,8 +1,8 @@
-// app/auth/callback/route.ts
+// apps/web/app/auth/callback/route.ts
 import { NextResponse } from "next/server";
 import { SignJWT } from "jose";
 
-export const runtime = "nodejs"; // belangrijk: node runtime (niet edge) voor jose/Buffer
+export const runtime = "nodejs"; // nodig voor Buffer/jose
 
 function requireEnv(name: string) {
   const v = process.env[name];
@@ -28,21 +28,16 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "missing_code" }, { status: 400 });
   }
 
-  // ✅ Vul dit in via .env.local
-  // Bijvoorbeeld:
-  // COGNITO_DOMAIN=https://eu-west-1kklggohln.auth.eu-west-1.amazoncognito.com
-  // COGNITO_CLIENT_ID=...
-  // COGNITO_CLIENT_SECRET=...
-  // COGNITO_REDIRECT_URI=http://localhost:3000/auth/callback
-  // SESSION_SECRET=een-lange-random-string (min 32 chars)
+  // env vars
   let domain = requireEnv("COGNITO_DOMAIN").trim().replace(/\/$/, "");
   if (!domain.startsWith("http://") && !domain.startsWith("https://")) {
     domain = `https://${domain}`;
   }
+
   const clientId = requireEnv("COGNITO_CLIENT_ID");
   const clientSecret = requireEnv("COGNITO_CLIENT_SECRET");
   const redirectUri = requireEnv("COGNITO_REDIRECT_URI");
-  const sessionSecret = requireEnv("AUTH_COOKIE_SECRET");
+  const cookieSecret = requireEnv("AUTH_COOKIE_SECRET");
 
   const tokenUrl = `${domain}/oauth2/token`;
 
@@ -52,7 +47,6 @@ export async function GET(req: Request) {
   body.set("code", code);
   body.set("redirect_uri", redirectUri);
 
-  // Basic auth: base64(client_id:client_secret)
   const basic = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
 
   const tokenRes = await fetch(tokenUrl, {
@@ -68,14 +62,12 @@ export async function GET(req: Request) {
   const tokenJson = await tokenRes.json();
 
   if (!tokenRes.ok) {
-    // Cognito geeft vaak: error, error_description
     return NextResponse.json(
       { error: "token_exchange_failed", details: tokenJson },
       { status: 400 }
     );
   }
 
-  // tokenJson bevat meestal: access_token, id_token, refresh_token?, expires_in, token_type
   const accessToken = tokenJson.access_token as string | undefined;
   const idToken = tokenJson.id_token as string | undefined;
   const refreshToken = tokenJson.refresh_token as string | undefined;
@@ -88,15 +80,14 @@ export async function GET(req: Request) {
     );
   }
 
-  // ✅ Maak een eigen sessie-cookie (httpOnly) door een “session JWT” te signen
-  // Let op: dit is een pragmatische aanpak; later kun je refresh tokens server-side opslaan.
-  const secretKey = new TextEncoder().encode(sessionSecret);
+  // session cookie jwt
+  const secretKey = new TextEncoder().encode(cookieSecret);
   const expiresAt = Math.floor(Date.now() / 1000) + expiresIn;
 
   const sessionJwt = await new SignJWT({
     accessToken,
     idToken,
-    refreshToken, // kan undefined zijn; ok
+    refreshToken,
     expiresAt,
   })
     .setProtectedHeader({ alg: "HS256" })
@@ -104,9 +95,24 @@ export async function GET(req: Request) {
     .setExpirationTime(expiresAt)
     .sign(secretKey);
 
+  // returnTo via state (base64url JSON)
   const state = url.searchParams.get("state");
-  const target = state ? decodeURIComponent(state) : "/";
-  const res = NextResponse.redirect(new URL(target, req.url));
+  let returnTo = "/";
+
+  if (state) {
+    try {
+      const parsed = JSON.parse(
+        Buffer.from(state, "base64url").toString("utf8")
+      );
+      if (parsed?.returnTo && typeof parsed.returnTo === "string") {
+        returnTo = parsed.returnTo;
+      }
+    } catch {
+      // ignore invalid state
+    }
+  }
+
+  const res = NextResponse.redirect(new URL(returnTo, req.url));
 
   res.cookies.set({
     name: "tacture_session",
@@ -115,19 +121,8 @@ export async function GET(req: Request) {
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    maxAge: expiresIn, // seconds
+    maxAge: expiresIn,
   });
 
   return res;
 }
-
-const state = url.searchParams.get("state");
-let returnTo = "/";
-if (state) {
-  try {
-    const parsed = JSON.parse(Buffer.from(state, "base64url").toString("utf8"));
-    if (parsed?.returnTo) returnTo = parsed.returnTo;
-  } catch {}
-}
-...
-const res = NextResponse.redirect(new URL(returnTo, req.url));
