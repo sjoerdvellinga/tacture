@@ -2,23 +2,22 @@ version: 1
 
 applications:
   - appRoot: apps/landing
-
     frontend:
       phases:
         preBuild:
           commands:
             - cd ../../
             - npm ci
-
         build:
           commands:
             - npm run -w apps/landing build
 
       artifacts:
-        baseDirectory: apps/landing/.next
+        baseDirectory: .next
         files:
-          - '**/*'
+          - "**/*"
 
       cache:
         paths:
           - node_modules/**/*
+          - apps/landing/node_modules/**/*
