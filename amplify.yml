@@ -1,26 +1,36 @@
 version: 1
 
 applications:
+  # =========================
+  # Landing app (apps/landing)
+  # =========================
   - appRoot: apps/landing
     frontend:
       phases:
         preBuild:
           commands:
+            # Ga naar repo root zodat workspaces correct installeren
             - cd ../..
             - npm ci --include=dev
         build:
           commands:
-            - npm -w apps/landing run build
+            # Build altijd met webpack om turbopack issues te vermijden
+            - npm -w apps/landing run build -- --webpack
       artifacts:
-        baseDirectory: apps/landing/.next
+        # RELATIEF AAN appRoot (apps/landing)
+        baseDirectory: .next
         files:
           - '**/*'
       cache:
         paths:
-          - node_modules/**/*
-          - .npm/**/*
+          # root node_modules (RELATIEF AAN appRoot)
+          - ../../node_modules/**/*
+          # Next build cache (RELATIEF AAN appRoot)
           - .next/cache/**/*
 
+  # =====================
+  # Web app (apps/web)
+  # =====================
   - appRoot: apps/web
     frontend:
       phases:
@@ -30,13 +40,12 @@ applications:
             - npm ci --include=dev
         build:
           commands:
-            - npm -w apps/web run build
+            - npm -w apps/web run build -- --webpack
       artifacts:
-        baseDirectory: apps/web/.next
+        baseDirectory: .next
         files:
           - '**/*'
       cache:
         paths:
-          - node_modules/**/*
-          - .npm/**/*
+          - ../../node_modules/**/*
           - .next/cache/**/*
