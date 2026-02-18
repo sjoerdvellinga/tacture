@@ -3,21 +3,17 @@ import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
-function requireEnv(name: string) {
-  const v = process.env[name];
-  if (!v) throw new Error(`Missing env var: ${name}`);
-  return v;
-}
-
 function getEnv(name: string) {
   return process.env[name];
 }
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
-  const returnTo = url.searchParams.get("returnTo") ?? "/";
 
-  // ✅ Prefer server env vars (Amplify), fallback to NEXT_PUBLIC for local/dev if needed
+  let returnTo = url.searchParams.get("returnTo") ?? "/";
+  if (!returnTo.startsWith("/")) returnTo = "/";
+  if (returnTo.startsWith("//")) returnTo = "/";
+
   let domain =
     getEnv("COGNITO_DOMAIN") ??
     getEnv("NEXT_PUBLIC_COGNITO_DOMAIN") ??
@@ -63,8 +59,8 @@ export async function GET(req: Request) {
   authorizeUrl.searchParams.set("client_id", clientId);
   authorizeUrl.searchParams.set("redirect_uri", redirectUri);
   authorizeUrl.searchParams.set("scope", "openid email profile");
+  authorizeUrl.searchParams.set("prompt", "login");
 
-  // state gebruiken om returnTo mee te nemen
   authorizeUrl.searchParams.set(
     "state",
     Buffer.from(JSON.stringify({ returnTo })).toString("base64url")

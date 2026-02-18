@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { SignJWT } from "jose";
 
-export const runtime = "nodejs"; // nodig voor Buffer/jose
+export const runtime = "nodejs";
 
 function requireEnv(name: string) {
   const v = process.env[name];
@@ -28,7 +28,6 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "missing_code" }, { status: 400 });
   }
 
-  // env vars
   let domain = requireEnv("COGNITO_DOMAIN").trim().replace(/\/$/, "");
   if (!domain.startsWith("http://") && !domain.startsWith("https://")) {
     domain = `https://${domain}`;
@@ -37,7 +36,7 @@ export async function GET(req: Request) {
   const clientId = requireEnv("COGNITO_CLIENT_ID");
   const clientSecret = requireEnv("COGNITO_CLIENT_SECRET");
   const redirectUri = requireEnv("COGNITO_REDIRECT_URI");
-  const cookieSecret = requireEnv("AUTH_COOKIE_SECRET");
+  const sessionSecret = requireEnv("AUTH_COOKIE_SECRET");
 
   const tokenUrl = `${domain}/oauth2/token`;
 
@@ -80,8 +79,7 @@ export async function GET(req: Request) {
     );
   }
 
-  // session cookie jwt
-  const secretKey = new TextEncoder().encode(cookieSecret);
+  const secretKey = new TextEncoder().encode(sessionSecret);
   const expiresAt = Math.floor(Date.now() / 1000) + expiresIn;
 
   const sessionJwt = await new SignJWT({
@@ -95,21 +93,14 @@ export async function GET(req: Request) {
     .setExpirationTime(expiresAt)
     .sign(secretKey);
 
-  // returnTo via state (base64url JSON)
-  const state = url.searchParams.get("state");
+  // state is base64url(JSON.stringify({ returnTo }))
   let returnTo = "/";
-
+  const state = url.searchParams.get("state");
   if (state) {
     try {
-      const parsed = JSON.parse(
-        Buffer.from(state, "base64url").toString("utf8")
-      );
-      if (parsed?.returnTo && typeof parsed.returnTo === "string") {
-        returnTo = parsed.returnTo;
-      }
-    } catch {
-      // ignore invalid state
-    }
+      const parsed = JSON.parse(Buffer.from(state, "base64url").toString("utf8"));
+      if (parsed?.returnTo) returnTo = parsed.returnTo;
+    } catch {}
   }
 
   const res = NextResponse.redirect(new URL(returnTo, req.url));
