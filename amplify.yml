@@ -1,5 +1,8 @@
 version: 1
 applications:
+  # ==============================
+  # Landing (tacture.com)
+  # ==============================
   - appRoot: apps/landing
     frontend:
       phases:
@@ -13,12 +16,15 @@ applications:
       artifacts:
         baseDirectory: apps/landing/.next
         files:
-          - "**/*"
+          - '**/*'
       cache:
         paths:
           - node_modules/**/*
-          - apps/landing/.next/cache/**/*
+          - apps/landing/node_modules/**/*
 
+  # ==============================
+  # Web app (app.tacture.com)
+  # ==============================
   - appRoot: apps/web
     frontend:
       phases:
@@ -32,8 +38,8 @@ applications:
       artifacts:
         baseDirectory: apps/web/.next
         files:
-          - "**/*"
+          - '**/*'
       cache:
         paths:
           - node_modules/**/*
-          - apps/web/.next/cache/**/*
+          - apps/web/node_modules/**/*
