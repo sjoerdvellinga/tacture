@@ -1,11 +1,16 @@
 {
   "name": "tacture",
   "private": true,
-  "workspaces": ["apps/*"],
+  "workspaces": [
+    "apps/*"
+  ],
   "scripts": {
-    "dev:landing": "npm --workspace apps/landing run dev",
-    "build:landing": "npm --workspace apps/landing run build",
-    "dev:web": "npm --workspace apps/web run dev",
-    "build:web": "npm --workspace apps/web run build"
+    "build:landing": "npm -w apps/landing run build",
+    "build:web": "npm -w apps/web run build",
+    "dev:landing": "npm -w apps/landing run dev",
+    "dev:web": "npm -w apps/web run dev"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.18"
   }
 }
