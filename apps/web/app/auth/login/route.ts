@@ -1,4 +1,7 @@
+// apps/web/app/auth/login/route.ts
 import { NextResponse } from "next/server";
+
+export const runtime = "nodejs";
 
 function requireEnv(name: string) {
   const v = process.env[name];
@@ -6,10 +9,9 @@ function requireEnv(name: string) {
   return v;
 }
 
-export const runtime = "nodejs";
-
 export async function GET(req: Request) {
   const url = new URL(req.url);
+  const returnTo = url.searchParams.get("returnTo") || "/";
 
   let domain = requireEnv("COGNITO_DOMAIN").trim().replace(/\/$/, "");
   if (!domain.startsWith("http://") && !domain.startsWith("https://")) {
@@ -19,16 +21,16 @@ export async function GET(req: Request) {
   const clientId = requireEnv("COGNITO_CLIENT_ID");
   const redirectUri = requireEnv("COGNITO_REDIRECT_URI");
 
-  // optioneel: returnTo (waar je heen wil na login)
-  const returnTo = url.searchParams.get("returnTo") || "/";
-  const state = encodeURIComponent(returnTo);
+  const state = Buffer.from(
+    JSON.stringify({ returnTo, t: Date.now() })
+  ).toString("base64url");
 
-  const authorizeUrl = new URL(`${domain}/oauth2/authorize`);
-  authorizeUrl.searchParams.set("client_id", clientId);
-  authorizeUrl.searchParams.set("response_type", "code");
-  authorizeUrl.searchParams.set("scope", "openid email profile");
-  authorizeUrl.searchParams.set("redirect_uri", redirectUri);
-  authorizeUrl.searchParams.set("state", state);
+  const authorize = new URL(`${domain}/oauth2/authorize`);
+  authorize.searchParams.set("client_id", clientId);
+  authorize.searchParams.set("response_type", "code");
+  authorize.searchParams.set("scope", "openid email profile");
+  authorize.searchParams.set("redirect_uri", redirectUri);
+  authorize.searchParams.set("state", state);
 
-  return NextResponse.redirect(authorizeUrl.toString());
+  return NextResponse.redirect(authorize.toString());
 }
