@@ -120,3 +120,14 @@ export async function GET(req: Request) {
 
   return res;
 }
+
+const state = url.searchParams.get("state");
+let returnTo = "/";
+if (state) {
+  try {
+    const parsed = JSON.parse(Buffer.from(state, "base64url").toString("utf8"));
+    if (parsed?.returnTo) returnTo = parsed.returnTo;
+  } catch {}
+}
+...
+const res = NextResponse.redirect(new URL(returnTo, req.url));
