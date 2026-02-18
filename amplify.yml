@@ -1,51 +1,16 @@
 version: 1
-applications:
-
-  # ==============================
-  # Landing (tacture.com)
-  # ==============================
-  - appRoot: apps/landing
-    frontend:
-      phases:
-        preBuild:
-          commands:
-            - npm ci --include=optional
-        build:
-          commands:
-            - npm run -w apps/landing build
-      artifacts:
-        baseDirectory: apps/landing
-        files:
-          - .next/**/*
-          - public/**/*
-          - package.json
-          - next.config.js
-      cache:
-        paths:
-          - node_modules/**/*
-          - apps/landing/node_modules/**/*
-
-
-  # ==============================
-  # Web app (app.tacture.com)
-  # ==============================
-  - appRoot: apps/web
-    frontend:
-      phases:
-        preBuild:
-          commands:
-            - npm ci --include=optional
-        build:
-          commands:
-            - npm run -w apps/web build
-      artifacts:
-        baseDirectory: apps/web
-        files:
-          - .next/**/*
-          - public/**/*
-          - package.json
-          - next.config.js
-      cache:
-        paths:
-          - node_modules/**/*
-          - apps/web/node_modules/**/*
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - npm ci --include=optional
+    build:
+      commands:
+        - npm run build
+  artifacts:
+    baseDirectory: .next
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - node_modules/**/*
