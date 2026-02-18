@@ -104,7 +104,9 @@ export async function GET(req: Request) {
     .setExpirationTime(expiresAt)
     .sign(secretKey);
 
-  const res = NextResponse.redirect(new URL("/", req.url));
+  const state = url.searchParams.get("state");
+  const target = state ? decodeURIComponent(state) : "/";
+  const res = NextResponse.redirect(new URL(target, req.url));
 
   res.cookies.set({
     name: "tacture_session",
