@@ -65,6 +65,13 @@ export async function GET(req: Request) {
     "state",
     Buffer.from(JSON.stringify({ returnTo })).toString("base64url")
   );
-
-  return NextResponse.redirect(authorizeUrl.toString());
+// Redirect naar Cognito met debug
+  return NextResponse.json({
+    COGNITO_DOMAIN: process.env.COGNITO_DOMAIN,
+    COGNITO_CLIENT_ID: process.env.COGNITO_CLIENT_ID,
+    COGNITO_REDIRECT_URI: process.env.COGNITO_REDIRECT_URI,
+    ALL_ENV_KEYS: Object.keys(process.env).filter(k =>
+      k.includes("COGNITO") || k.includes("AUTH")
+    )
+  });
 }
